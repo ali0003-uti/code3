@@ -1,0 +1,558 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>مولّد أكواد الشحن</title>
+<style>
+  :root{
+    --bg:#0f1720; --card:#17212b; --card2:#1e2a36; --text:#eaf1f8; --muted:#8fa3b3;
+    --accent:#2f8f6b; --accent2:#3aa87e; --danger:#c0514a; --border:#2a3b48; --input:#0f1a22;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;background:var(--bg);color:var(--text);font-family:'Segoe UI',Tahoma,Arial,sans-serif;
+       -webkit-tap-highlight-color:transparent;padding-bottom:24px;}
+  header{background:linear-gradient(135deg,#1d4e3f,#17212b);padding:18px 16px 14px;text-align:center;
+         border-bottom:1px solid var(--border);}
+  header h1{margin:0;font-size:19px;}
+  header p{margin:4px 0 0;color:var(--muted);font-size:12px;}
+  nav{display:flex;background:var(--card);border-bottom:1px solid var(--border);position:sticky;top:0;z-index:5;overflow-x:auto;}
+  nav button{flex:1 0 auto;min-width:80px;background:none;border:none;color:var(--muted);padding:12px 6px;font-size:12.5px;
+             border-bottom:3px solid transparent;white-space:nowrap;}
+  nav button.active{color:var(--text);border-bottom-color:var(--accent2);font-weight:600;}
+  main{padding:14px;max-width:520px;margin:0 auto;}
+  .tab{display:none;} .tab.active{display:block;}
+  .card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:14px;}
+  .card h3{margin:0 0 10px;font-size:14px;color:var(--muted);font-weight:600;}
+  label{display:block;font-size:13px;color:var(--muted);margin:10px 0 4px;}
+  input,select{width:100%;padding:11px 10px;border-radius:8px;border:1px solid var(--border);
+        background:var(--input);color:var(--text);font-size:15px;direction:ltr;text-align:right;}
+  select{direction:rtl;text-align:right;}
+  .row{display:flex;gap:10px;}
+  .row>div{flex:1;}
+  button.btn{width:100%;padding:13px;border:none;border-radius:9px;background:var(--accent);color:#fff;
+             font-size:15px;font-weight:600;margin-top:14px;}
+  button.btn:active{background:var(--accent2);}
+  button.btn.secondary{background:var(--card2);color:var(--text);border:1px solid var(--border);}
+  button.btn.danger{background:var(--danger);}
+  button.btn.small{padding:9px;font-size:13px;margin-top:8px;}
+  .result{background:var(--card2);border:1px solid var(--accent);border-radius:10px;padding:14px;margin-top:14px;text-align:center;}
+  .result .token{font-size:22px;letter-spacing:2px;font-family:'Consolas',monospace;direction:ltr;color:#bfe9d4;margin:6px 0;}
+  .result .sub{font-size:12px;color:var(--muted);}
+  .actions{display:flex;gap:8px;margin-top:10px;}
+  .actions button{flex:1;padding:10px;border-radius:8px;border:1px solid var(--border);background:var(--card);color:var(--text);font-size:13px;}
+  .warn{background:#3a2a16;border:1px solid #6b4a1f;color:#f0c98b;border-radius:10px;padding:10px 12px;font-size:12.5px;margin-bottom:14px;line-height:1.7;}
+  .err{background:#3a1616;border:1px solid #6b1f1f;color:#f0a0a0;border-radius:10px;padding:10px 12px;font-size:13px;margin-top:10px;}
+  .ok{background:#163a28;border:1px solid #1f6b43;color:#a0f0c0;border-radius:10px;padding:10px 12px;font-size:13px;margin-top:10px;}
+  .hint{font-size:11.5px;color:var(--muted);margin-top:3px;}
+  #toast{position:fixed;bottom:18px;left:50%;transform:translateX(-50%);background:#222;color:#fff;
+         padding:10px 18px;border-radius:20px;font-size:13px;opacity:0;transition:opacity .25s;z-index:50;}
+  #toast.show{opacity:1;}
+  .picker{position:relative;}
+  .picker-list{position:absolute;top:calc(100% + 4px);right:0;left:0;background:var(--input);
+      border:1px solid var(--border);border-radius:8px;max-height:220px;overflow-y:auto;z-index:20;display:none;}
+  .picker-list.show{display:block;}
+  .picker-item{padding:10px 12px;border-bottom:1px solid var(--border);font-size:13.5px;cursor:pointer;}
+  .picker-item:last-child{border-bottom:none;}
+  .picker-item b{color:var(--text);} .picker-item span{color:var(--muted);font-size:12px;display:block;}
+  .picker-item:active{background:var(--card2);}
+  .custlist{margin-top:6px;}
+  .custrow{display:flex;justify-content:space-between;align-items:center;padding:10px 4px;border-bottom:1px solid var(--border);}
+  .custrow .info b{display:block;font-size:14px;} .custrow .info span{color:var(--muted);font-size:12px;}
+  .custrow .del{background:none;border:none;color:var(--danger);font-size:18px;padding:4px 8px;}
+  .histrow{padding:10px 4px;border-bottom:1px solid var(--border);}
+  .histrow .top{display:flex;justify-content:space-between;font-size:13px;}
+  .histrow .tok{font-family:Consolas,monospace;direction:ltr;letter-spacing:1px;color:#bfe9d4;font-size:13px;margin-top:4px;}
+  .histrow .meta{color:var(--muted);font-size:11.5px;margin-top:2px;}
+  .histrow .hactions{display:flex;gap:6px;margin-top:6px;}
+  .histrow .hactions button{flex:1;font-size:11.5px;padding:6px;border-radius:6px;border:1px solid var(--border);background:var(--card2);color:var(--text);}
+  .empty{color:var(--muted);text-align:center;padding:20px 10px;font-size:13px;}
+  .footer-note{text-align:center;color:var(--muted);font-size:11px;margin-top:18px;line-height:1.8;}
+  .searchbox{margin-bottom:10px;}
+</style>
+</head>
+<body>
+
+<header>
+  <h1>⚡ مولّد أكواد الشحن</h1>
+  <p>يعمل بالكامل على جهازك بدون إنترنت</p>
+</header>
+
+<nav>
+  <button class="tabbtn active" data-tab="gen">توليد الكود</button>
+  <button class="tabbtn" data-tab="customers">العملاء/العدادات</button>
+  <button class="tabbtn" data-tab="history">السجل</button>
+  <button class="tabbtn" data-tab="settings">الإعدادات</button>
+</nav>
+
+<main>
+
+<div class="warn" id="setupWarn" style="display:none">
+  لم تُدخل بيانات المجموعة (SGC / VK1 / VK2 ...) بعد، أو هي غير مكتملة. افتح تبويب <b>الإعدادات</b> وتأكد منها.
+</div>
+
+<!-- ======= TAB: GENERATE ======= -->
+<div class="tab active" id="tab-gen">
+  <div class="card">
+    <h3>اختر العميل / العداد</h3>
+    <div class="picker">
+      <input id="meterSearch" placeholder="اكتب رقم العداد أو اسم العميل للبحث..." autocomplete="off">
+      <div class="picker-list" id="meterResults"></div>
+    </div>
+    <div class="hint">يبحث في قائمة العملاء المحفوظة في تبويب "العملاء/العدادات". إن لم يكن العميل موجودًا أضفه من هناك أولًا، أو أدخل رقم العداد يدويًا أدناه مباشرة.</div>
+
+    <label>رقم العداد المحدد</label>
+    <input id="meterNo" inputmode="numeric" placeholder="مثال: 0128234600145" maxlength="20">
+    <div class="hint" id="custNameShown"></div>
+
+    <label>الكمية (كيلوواط/ساعة)</label>
+    <input id="kwh" inputmode="decimal" placeholder="مثال: 400">
+
+    <button class="btn" id="genBtn">توليد الكود</button>
+  </div>
+
+  <div class="result" id="resultBox" style="display:none">
+    <div class="sub">كود الشحن (Token)</div>
+    <div class="token" id="tokenOut">-</div>
+    <div class="sub" id="metaOut"></div>
+    <div class="actions">
+      <button id="copyBtn">📋 نسخ</button>
+      <button id="shareBtn">↗️ إرسال</button>
+    </div>
+  </div>
+  <div id="genErr"></div>
+
+  <div class="footer-note">
+    هذا التطبيق أداة تقنية مساعدة لحامل الترخيص الأصلي فقط. تأكد من حقك القانوني في توليد أكواد الشحن لهذه العدادات قبل الاستخدام.
+  </div>
+</div>
+
+<!-- ======= TAB: CUSTOMERS ======= -->
+<div class="tab" id="tab-customers">
+  <div class="card">
+    <h3>قائمة العملاء والعدادات</h3>
+    <div class="hint" style="margin-bottom:10px">
+      تم تحميل 28 عدادًا تلقائيًا من قاعدة بياناتك الأصلية (Meter.db) عند إنشاء هذا التطبيق. ملاحظة: الأسماء الظاهرة (dabab01، zero، adama1...) هي كما وُجدت في قاعدة بياناتك — تبدو بيانات اختبار وليست أسماء عملاء حقيقية؛ عدّلها هنا كما تحتاج. يمكنك أيضًا إضافة عملاء جدد أو حذف الموجودين، وكل تعديل يُحفظ على جهازك فقط.
+    </div>
+    <input class="searchbox" id="custSearch" placeholder="بحث برقم العداد أو الاسم...">
+    <div class="custlist" id="custList"></div>
+  </div>
+
+  <div class="card">
+    <h3 id="custFormTitle">إضافة عميل جديد</h3>
+    <label>رقم العداد</label>
+    <input id="c_code" inputmode="numeric" maxlength="20">
+    <label>اسم العميل</label>
+    <input id="c_name">
+    <label>العنوان (اختياري)</label>
+    <input id="c_addr">
+
+    <div class="toggle" style="display:flex;align-items:center;gap:8px;margin-top:14px;">
+      <input type="checkbox" id="c_override" style="width:auto;">
+      <label style="margin:0;font-size:13px;">استخدام إعدادات تشفير خاصة بهذا العداد (بدل الإعدادات العامة)</label>
+    </div>
+    <div class="hint">اتركه غير مفعّل في الوضع الطبيعي — كل عداداتك الحالية (28 عدادًا، 586 عملية شراء فعلية) تستخدم نفس الإعدادات العامة فعليًا، وهذا هو تصميم بروتوكول STS القياسي. فعّل هذا فقط إذا أخبرك مزوّد الخدمة صراحة أن عدادًا معينًا له مفاتيح بيع مختلفة.</div>
+
+    <div id="c_overrideFields" style="display:none">
+      <div class="row"><div><label>SGC</label><input id="c_sgc" maxlength="6"></div><div><label>TI</label><input id="c_ti" maxlength="2"></div></div>
+      <div class="row"><div><label>KRN</label><input id="c_krn" maxlength="1"></div><div><label>KT</label><input id="c_kt" maxlength="1"></div></div>
+      <label>VK1</label><input id="c_vk1" maxlength="16">
+      <label>DKGA</label>
+      <select id="c_dkga"><option value="1">1</option><option value="2">2</option><option value="3">3</option></select>
+      <label>VK2</label><input id="c_vk2" maxlength="16">
+    </div>
+
+    <button class="btn" id="custSaveBtn">حفظ العميل</button>
+    <button class="btn secondary small" id="custCancelEdit" style="display:none">إلغاء التعديل / إضافة جديد</button>
+    <div id="custErr"></div>
+  </div>
+</div>
+
+<!-- ======= TAB: HISTORY ======= -->
+<div class="tab" id="tab-history">
+  <div class="card">
+    <h3>سجل الأكواد المُولَّدة</h3>
+    <input class="searchbox" id="histSearch" placeholder="بحث برقم العداد أو الاسم...">
+    <div id="histList"></div>
+    <button class="btn danger small" id="clearHistBtn">مسح السجل بالكامل</button>
+  </div>
+</div>
+
+<!-- ======= TAB: SETTINGS ======= -->
+<div class="tab" id="tab-settings">
+  <div class="card">
+    <h3>بيانات المجموعة</h3>
+    <div class="hint">
+      تم تعبئة هذه الحقول تلقائيًا من قاعدة بياناتك الأصلية (جدول u_power) عند إنشاء هذا التطبيق، وهي مطابقة ومتحقَّق منها على معاملات حقيقية فعلية. عدّلها فقط إن تغيّرت هذه البيانات لديك مستقبلًا. تُحفظ على جهازك فقط ولا تُرسل لأي خادم.
+    </div>
+
+    <label>IIN</label>
+    <input id="s_iin">
+
+    <label>Supply Group Code (SGC)</label>
+    <input id="s_sgc" maxlength="6">
+
+    <label>Tariff Index (TI)</label>
+    <input id="s_ti" maxlength="2">
+
+    <label>Key Revision Number (KRN)</label>
+    <input id="s_krn" maxlength="1">
+
+    <label>Key Type (KT)</label>
+    <input id="s_kt" maxlength="1">
+
+    <label>VK1 (Vending Key 1) — هكس 16 خانة</label>
+    <input id="s_vk1" maxlength="16">
+
+    <label>DKGA (طريقة اشتقاق المفتاح)</label>
+    <select id="s_dkga">
+      <option value="1">1</option>
+      <option value="2">2</option>
+      <option value="3">3</option>
+    </select>
+
+    <div id="vk2wrap">
+      <label>VK2 (Vending Key 2) — هكس 16 خانة</label>
+      <input id="s_vk2" maxlength="16">
+    </div>
+
+    <button class="btn" id="saveSettings">حفظ الإعدادات</button>
+    <button class="btn secondary" id="resetDefaults">إعادة القيم الأصلية المستخرجة</button>
+    <button class="btn danger" id="wipeSettings">مسح كل بيانات التطبيق من الجهاز</button>
+    <div id="setErr"></div>
+  </div>
+</div>
+
+</main>
+
+<div id="toast"></div>
+
+<script src="sts-core.js"></script>
+<script>
+const $=id=>document.getElementById(id);
+function toast(msg){const t=$('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),1600);}
+function esc(s){return (s||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+
+// ---------- tabs ----------
+document.querySelectorAll('.tabbtn').forEach(b=>b.addEventListener('click',()=>{
+  document.querySelectorAll('.tabbtn').forEach(x=>x.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));
+  b.classList.add('active'); $('tab-'+b.dataset.tab).classList.add('active');
+  if(b.dataset.tab==='customers') renderCustomers();
+  if(b.dataset.tab==='history') renderHistory();
+}));
+
+// ---------- real defaults extracted & verified from the user's own Meter.db ----------
+const REAL_DEFAULTS = {
+  iin:'0000', sgc:'200420', ti:'01', krn:'2', kt:'2',
+  vk1:'E6D56866A875439A', vk2:'9085DACE49218D33', dkga:'3'
+};
+
+// ---------- settings persistence ----------
+const SKEY='sts_settings_v2';
+function loadSettings(){
+  try{ const s=JSON.parse(localStorage.getItem(SKEY)); if(s) return s; }catch(e){}
+  return {...REAL_DEFAULTS};
+}
+function saveSettingsObj(o){ localStorage.setItem(SKEY,JSON.stringify(o)); }
+
+function fillSettingsForm(s){
+  $('s_iin').value=s.iin||'0000';
+  $('s_sgc').value=s.sgc||'';
+  $('s_ti').value=s.ti||'';
+  $('s_krn').value=s.krn||'';
+  $('s_kt').value=s.kt||'';
+  $('s_vk1').value=s.vk1||'';
+  $('s_vk2').value=s.vk2||'';
+  $('s_dkga').value=s.dkga||'3';
+}
+function readSettingsForm(){
+  return {
+    iin:$('s_iin').value.trim()||'0000',
+    sgc:$('s_sgc').value.trim(),
+    ti:$('s_ti').value.trim(),
+    krn:$('s_krn').value.trim(),
+    kt:$('s_kt').value.trim(),
+    vk1:$('s_vk1').value.trim().toUpperCase(),
+    vk2:$('s_vk2').value.trim().toUpperCase(),
+    dkga:$('s_dkga').value
+  };
+}
+function settingsComplete(s){
+  if(!s) return false;
+  if(!s.sgc||!s.ti||!s.krn||!s.kt||!s.vk1) return false;
+  if(s.dkga==='3' && !s.vk2) return false;
+  return true;
+}
+function checkWarn(){ $('setupWarn').style.display = settingsComplete(loadSettings()) ? 'none':'block'; }
+
+fillSettingsForm(loadSettings());
+checkWarn();
+
+$('saveSettings').addEventListener('click',()=>{
+  const s=readSettingsForm();
+  const err=$('setErr'); err.innerHTML='';
+  if(!/^[0-9A-Fa-f]{16}$/.test(s.vk1||'')){ err.innerHTML='<div class="err">VK1 يجب أن يكون 16 خانة سداسية (0-9, A-F).</div>'; return; }
+  if(s.dkga==='3' && !/^[0-9A-Fa-f]{16}$/.test(s.vk2||'')){ err.innerHTML='<div class="err">DKGA=3 يتطلب VK2 صحيح (16 خانة سداسية).</div>'; return; }
+  saveSettingsObj(s); checkWarn(); toast('تم الحفظ');
+});
+$('resetDefaults').addEventListener('click',()=>{
+  fillSettingsForm(REAL_DEFAULTS); saveSettingsObj({...REAL_DEFAULTS}); checkWarn(); toast('تمت الاستعادة');
+});
+$('wipeSettings').addEventListener('click',()=>{
+  if(confirm('سيُحذف كل شيء محفوظ على هذا الجهاز (الإعدادات، العملاء المضافون، السجل) نهائيًا. متابعة؟')){
+    localStorage.clear(); fillSettingsForm(REAL_DEFAULTS); checkWarn();
+    loadMeters(true); renderHistory(); toast('تم المسح');
+  }
+});
+$('s_dkga').addEventListener('change',()=>{ $('vk2wrap').style.display = $('s_dkga').value==='3'?'block':'none'; });
+$('vk2wrap').style.display = loadSettings().dkga==='3'?'block':'none';
+
+// ---------- TID (verified against 4 real transactions in the user's own database) ----------
+function defaultTid(d){
+  const base=new Date(2014,0,1,0,0,1).getTime();
+  return Math.floor((d.getTime()-base)/60000);
+}
+
+// ---------- customers / meters ----------
+const CKEY='sts_customers_v1';
+let SEED_METERS=[];
+async function loadSeedMeters(){
+  try{ const r=await fetch('meters_seed.json'); SEED_METERS=await r.json(); }catch(e){ SEED_METERS=[]; }
+}
+function loadMeters(forceReseed){
+  if(forceReseed){ localStorage.setItem(CKEY, JSON.stringify(SEED_METERS)); return SEED_METERS; }
+  try{
+    const raw=localStorage.getItem(CKEY);
+    if(raw) return JSON.parse(raw);
+  }catch(e){}
+  localStorage.setItem(CKEY, JSON.stringify(SEED_METERS));
+  return SEED_METERS;
+}
+function saveMeters(list){ localStorage.setItem(CKEY, JSON.stringify(list)); }
+
+let editingCode=null;
+
+function renderCustomers(){
+  const q=($('custSearch').value||'').trim().toLowerCase();
+  const list=loadMeters().filter(m=>!q || m.code.includes(q) || (m.name||'').toLowerCase().includes(q));
+  const box=$('custList'); box.innerHTML='';
+  if(!list.length){ box.innerHTML='<div class="empty">لا يوجد عملاء مطابقون.</div>'; return; }
+  list.forEach(m=>{
+    const row=document.createElement('div'); row.className='custrow';
+    const badge = m.override ? ' <span style="color:#f0c98b">⚙️ إعدادات خاصة</span>' : '';
+    row.innerHTML=`<div class="info" data-edit="${esc(m.code)}"><b>${esc(m.name)||'(بدون اسم)'}</b><span>${esc(m.code)}${m.address?' • '+esc(m.address):''}${badge}</span></div>
+                   <button class="del" data-code="${esc(m.code)}">✕</button>`;
+    box.appendChild(row);
+  });
+  box.querySelectorAll('.info').forEach(el=>el.addEventListener('click',()=>loadIntoForm(el.dataset.edit)));
+  box.querySelectorAll('.del').forEach(btn=>btn.addEventListener('click',(ev)=>{
+    ev.stopPropagation();
+    if(!confirm('حذف هذا العميل من القائمة؟')) return;
+    const list2=loadMeters().filter(m=>m.code!==btn.dataset.code);
+    saveMeters(list2); renderCustomers();
+    if(editingCode===btn.dataset.code) resetCustForm();
+  }));
+}
+$('custSearch').addEventListener('input', renderCustomers);
+
+function loadIntoForm(code){
+  const m=loadMeters().find(x=>x.code===code);
+  if(!m) return;
+  editingCode=code;
+  $('custFormTitle').textContent='تعديل عميل: '+(m.name||code);
+  $('c_code').value=m.code; $('c_code').disabled=true;
+  $('c_name').value=m.name||''; $('c_addr').value=m.address||'';
+  const ov=m.override;
+  $('c_override').checked=!!ov;
+  $('c_overrideFields').style.display = ov ? 'block':'none';
+  const g=loadSettings();
+  $('c_sgc').value=(ov?ov.sgc:g.sgc)||''; $('c_ti').value=(ov?ov.ti:g.ti)||'';
+  $('c_krn').value=(ov?ov.krn:g.krn)||''; $('c_kt').value=(ov?ov.kt:g.kt)||'';
+  $('c_vk1').value=(ov?ov.vk1:g.vk1)||''; $('c_vk2').value=(ov?ov.vk2:g.vk2)||'';
+  $('c_dkga').value=(ov?ov.dkga:g.dkga)||'3';
+  $('custCancelEdit').style.display='block';
+  $('tab-customers').scrollIntoView({behavior:'smooth'});
+}
+function resetCustForm(){
+  editingCode=null;
+  $('custFormTitle').textContent='إضافة عميل جديد';
+  $('c_code').value=''; $('c_code').disabled=false;
+  $('c_name').value=''; $('c_addr').value='';
+  $('c_override').checked=false; $('c_overrideFields').style.display='none';
+  $('custCancelEdit').style.display='none';
+}
+$('custCancelEdit').addEventListener('click', resetCustForm);
+$('c_override').addEventListener('change',()=>{
+  $('c_overrideFields').style.display=$('c_override').checked?'block':'none';
+  if($('c_override').checked){
+    const g=loadSettings();
+    if(!$('c_sgc').value) $('c_sgc').value=g.sgc||'';
+    if(!$('c_ti').value) $('c_ti').value=g.ti||'';
+    if(!$('c_krn').value) $('c_krn').value=g.krn||'';
+    if(!$('c_kt').value) $('c_kt').value=g.kt||'';
+    if(!$('c_vk1').value) $('c_vk1').value=g.vk1||'';
+    if(!$('c_vk2').value) $('c_vk2').value=g.vk2||'';
+  }
+});
+
+$('custSaveBtn').addEventListener('click',()=>{
+  const code=editingCode || $('c_code').value.trim();
+  const name=$('c_name').value.trim();
+  const addr=$('c_addr').value.trim();
+  const err=$('custErr'); err.innerHTML='';
+  if(!/^[0-9]{6,20}$/.test(code)){ err.innerHTML='<div class="err">أدخل رقم عداد صحيح (أرقام فقط).</div>'; return; }
+
+  let override=null;
+  if($('c_override').checked){
+    override={
+      iin:'0000', sgc:$('c_sgc').value.trim(), ti:$('c_ti').value.trim(),
+      krn:$('c_krn').value.trim(), kt:$('c_kt').value.trim(),
+      vk1:$('c_vk1').value.trim().toUpperCase(), vk2:$('c_vk2').value.trim().toUpperCase(),
+      dkga:$('c_dkga').value
+    };
+    if(!/^[0-9A-Fa-f]{16}$/.test(override.vk1)){ err.innerHTML='<div class="err">VK1 الخاص بهذا العداد يجب أن يكون 16 خانة سداسية.</div>'; return; }
+    if(override.dkga==='3' && !/^[0-9A-Fa-f]{16}$/.test(override.vk2)){ err.innerHTML='<div class="err">VK2 مطلوب وصحيح عندما DKGA=3.</div>'; return; }
+    if(!override.sgc||!override.ti||!override.krn||!override.kt){ err.innerHTML='<div class="err">أكمل كل حقول الإعدادات الخاصة.</div>'; return; }
+  }
+
+  const list=loadMeters().filter(m=>m.code!==code);
+  const existing=loadMeters().find(m=>m.code===code);
+  list.unshift({code,name,address:addr,bureau:existing?existing.bureau:'',override});
+  saveMeters(list);
+  resetCustForm();
+  toast('تم الحفظ'); renderCustomers();
+});
+
+// meter search/picker on generate tab
+function renderPicker(q){
+  const list=loadMeters();
+  q=(q||'').trim().toLowerCase();
+  const matches = q ? list.filter(m=>m.code.includes(q) || (m.name||'').toLowerCase().includes(q)).slice(0,20) : [];
+  const box=$('meterResults');
+  if(!matches.length){ box.classList.remove('show'); box.innerHTML=''; return; }
+  box.innerHTML=matches.map(m=>`<div class="picker-item" data-code="${esc(m.code)}" data-name="${esc(m.name)}">
+      <b>${esc(m.name)||'(بدون اسم)'}</b><span>${esc(m.code)}</span></div>`).join('');
+  box.classList.add('show');
+  box.querySelectorAll('.picker-item').forEach(it=>it.addEventListener('click',()=>{
+    $('meterNo').value=it.dataset.code;
+    const rec=loadMeters().find(m=>m.code===it.dataset.code);
+    let t = it.dataset.name ? 'العميل: '+it.dataset.name : '';
+    if(rec && rec.override) t += '  •  ⚙️ يستخدم إعدادات تشفير خاصة بهذا العداد';
+    $('custNameShown').textContent = t;
+    $('meterSearch').value=''; box.classList.remove('show'); box.innerHTML='';
+  }));
+}
+$('meterSearch').addEventListener('input',e=>renderPicker(e.target.value));
+document.addEventListener('click',e=>{
+  if(!e.target.closest('.picker')) { $('meterResults').classList.remove('show'); }
+});
+$('meterNo').addEventListener('input',()=>{ $('custNameShown').textContent=''; });
+
+// ---------- history ----------
+const HKEY='sts_history_v1';
+function loadHistory(){ try{ return JSON.parse(localStorage.getItem(HKEY)||'[]'); }catch(e){ return []; } }
+function pushHistory(entry){
+  const h=loadHistory(); h.unshift(entry);
+  if(h.length>500) h.length=500;
+  localStorage.setItem(HKEY, JSON.stringify(h));
+}
+function renderHistory(){
+  const q=($('histSearch').value||'').trim().toLowerCase();
+  const h=loadHistory().filter(e=>!q || e.meter.includes(q) || (e.name||'').toLowerCase().includes(q));
+  const box=$('histList'); box.innerHTML='';
+  if(!h.length){ box.innerHTML='<div class="empty">لا يوجد سجل بعد.</div>'; return; }
+  h.forEach((e,i)=>{
+    const d=new Date(e.ts);
+    const row=document.createElement('div'); row.className='histrow';
+    row.innerHTML=`<div class="top"><b>${esc(e.name)||esc(e.meter)}</b><span>${d.toLocaleString('ar')}</span></div>
+      <div class="meta">العداد ${esc(e.meter)} • ${esc(String(e.kwh))} ك.و.س</div>
+      <div class="tok">${esc(tokenForOutside(e.token))}</div>
+      <div class="hactions"><button class="hcopy" data-i="${i}">📋 نسخ</button><button class="hshare" data-i="${i}">↗️ إرسال</button></div>`;
+    box.appendChild(row);
+  });
+  box.querySelectorAll('.hcopy').forEach(b=>b.addEventListener('click',()=>{
+    copyText(tokenForOutside(h[+b.dataset.i].token)); toast('تم النسخ');
+  }));
+  box.querySelectorAll('.hshare').forEach(b=>b.addEventListener('click',()=>{
+    const e=h[+b.dataset.i];
+    shareMsg(e.name, e.meter, e.kwh, e.token);
+  }));
+}
+$('histSearch').addEventListener('input', renderHistory);
+$('clearHistBtn').addEventListener('click',()=>{
+  if(confirm('مسح كل سجل الأكواد المولَّدة سابقًا؟ لا يمكن التراجع.')){
+    localStorage.removeItem(HKEY); renderHistory(); toast('تم المسح');
+  }
+});
+
+// ---------- copy / share ----------
+// U+2066 (LRI) ... U+2069 (PDI): force this run of text to always render
+// left-to-right, so WhatsApp/SMS never reorders the space-separated digit
+// groups when the surrounding message is Arabic (RTL).
+function isolateLTR(s){ return '\u2066'+s+'\u2069'; }
+
+function copyText(text){
+  if(window.Android && Android.copyToClipboard){ Android.copyToClipboard(text); return; }
+  const ta=document.createElement('textarea'); ta.value=text; document.body.appendChild(ta);
+  ta.select(); try{document.execCommand('copy');}catch(e){} document.body.removeChild(ta);
+}
+// Always copy/share the readable, spaced, direction-safe form of the token.
+function tokenForOutside(rawToken){ return isolateLTR(STS.fmt(rawToken)); }
+
+function shareMsg(name, meter, kwh, rawToken){
+  const who = name ? name : ('العداد '+meter); // fall back to the meter number only if no customer name is on file
+  const msg=`${who}\nالكمية: ${kwh} ك.و.س\nالكود: ${tokenForOutside(rawToken)}`;
+  if(window.Android && Android.shareText){ Android.shareText(msg); return; }
+  if(navigator.share){ navigator.share({text:msg}).catch(()=>{}); return; }
+  copyText(msg); toast('تم نسخ النص للمشاركة');
+}
+
+// ---------- generate ----------
+$('genBtn').addEventListener('click',()=>{
+  const errBox=$('genErr'); errBox.innerHTML=''; $('resultBox').style.display='none';
+  const meter=$('meterNo').value.trim();
+  const kwh=parseFloat($('kwh').value);
+  if(!/^[0-9]{6,20}$/.test(meter)){ errBox.innerHTML='<div class="err">أدخل أو اختر رقم عداد صحيح.</div>'; return; }
+  if(!(kwh>0)){ errBox.innerHTML='<div class="err">أدخل كمية صحيحة.</div>'; return; }
+
+  // use this meter's own override settings if it has one, otherwise the group-wide default
+  const custRec=loadMeters().find(m=>m.code===meter);
+  const s = (custRec && custRec.override) ? custRec.override : loadSettings();
+  if(!settingsComplete(s)){
+    errBox.innerHTML = (custRec && custRec.override)
+      ? '<div class="err">الإعدادات الخاصة بهذا العداد غير مكتملة. عدّلها من تبويب "العملاء/العدادات".</div>'
+      : '<div class="err">أكمل الإعدادات أولاً من تبويب "الإعدادات".</div>';
+    return;
+  }
+
+  const cls=0, sub=0, rnd=0; // verified: always 0 in the user's real transaction history
+  const tid=defaultTid(new Date());
+
+  try{
+    const meterKey = STS.makeMeterKey({iin:s.iin,drn:meter,kt:s.kt,sgc:s.sgc,ti:s.ti,krn:s.krn,vk1:s.vk1,vk2:s.vk2,dkga:s.dkga});
+    const token = STS.tokenCreate(cls,sub,rnd,tid,kwh,meterKey);
+    $('tokenOut').textContent = tokenForOutside(token);
+    const cust=loadMeters().find(m=>m.code===meter);
+    const name=cust?cust.name:'';
+    $('metaOut').textContent = `العداد ${meter}${name?' ('+name+')':''} • ${kwh} ك.و.س`;
+    $('resultBox').style.display='block';
+    $('resultBox').dataset.raw=token;
+    $('resultBox').dataset.meter=meter;
+    $('resultBox').dataset.name=name||'';
+    $('resultBox').dataset.kwh=kwh;
+    pushHistory({ts:Date.now(), meter, name, kwh, token});
+  }catch(e){
+    errBox.innerHTML='<div class="err">خطأ: '+e.message+'</div>';
+  }
+});
+$('copyBtn').addEventListener('click',()=>{ copyText(tokenForOutside($('resultBox').dataset.raw||'')); toast('تم نسخ الكود'); });
+$('shareBtn').addEventListener('click',()=>{
+  const r=$('resultBox'); shareMsg(r.dataset.name, r.dataset.meter, r.dataset.kwh, r.dataset.raw||'');
+});
+
+// ---------- init ----------
+loadSeedMeters().then(()=>{ loadMeters(); });
+</script>
+</body>
+</html>
